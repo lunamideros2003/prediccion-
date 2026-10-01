@@ -58,17 +58,6 @@ footer{text-align:center; padding:20px; color:#6d5b99}
 </style>
 </head>
 <body>
-<header>
-  <div class="badge">Regresión Lineal Simple + Múltiple</div>
-  <h1>🔮 PredictLab — Dólar · Energía · Glucosa</h1>
-  <p>Cambia las variables independientes y obtén la predicción al instante · Paleta morado claro + azul claro</p>
-  <div>
-    <span class="badge">Dataset 1: Precio Dólar</span>
-    <span class="badge">Dataset 2: Consumo Energía</span>
-    <span class="badge">Dataset 3: Nivel Glucosa</span>
-  </div>
-</header>
-
 <nav class="tabs">
   <button class="tab-btn active" data-tab="dolar">💵 Dólar</button>
   <button class="tab-btn" data-tab="energia">⚡ Energía</button>
@@ -177,7 +166,6 @@ footer{text-align:center; padding:20px; color:#6d5b99}
   </div>
 </section>
 
-<!-- ============ GLUCOSA ============ -->
 <section id="tab-glucosa" class="tab-panel" style="display:none">
   <div class="card">
     <h2>🩸 Predicción Nivel de Glucosa</h2>
@@ -228,7 +216,6 @@ footer{text-align:center; padding:20px; color:#6d5b99}
 <footer>Hecho con 💜 morado claro + 🩵 azul claro · Abre <code>index.html</code> con doble clic · Funciona sin internet</footer>
 
 <script>
-// ---------- MODELOS PRE-ENTRENADOS ----------
 const MODELS = {
   dolar: {
     simple: {
@@ -257,7 +244,6 @@ const MODELS = {
   }
 };
 
-// ---------- TABS ----------
 document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
@@ -273,7 +259,6 @@ document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=
   document.getElementById(other).style.display='none';
 }));
 
-// ---------- HELPERS ----------
 function bindPair(rId,nId,cb){
   const r=document.getElementById(rId), n=document.getElementById(nId);
   r.addEventListener('input',()=>{n.value=r.value; cb(parseFloat(r.value));});
@@ -289,13 +274,10 @@ function drawChart(canvasId, pts, b0, b1, color1, color2){
   const pad=30;
   const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad);
   const Y=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-2*pad);
-  // grid
   ctx.strokeStyle='#ede9fe'; ctx.lineWidth=1;
   for(let i=0;i<=4;i++){const gx=pad+i*(W-2*pad)/4; ctx.beginPath();ctx.moveTo(gx,10);ctx.lineTo(gx,H-pad);ctx.stroke();}
-  // puntos
   ctx.fillStyle=color1||'#c084fc';
   pts.slice(0,400).forEach(p=>{ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),2.2,0,7);ctx.fill();});
-  // recta
   ctx.strokeStyle=color2||'#0ea5e9'; ctx.lineWidth=3; ctx.beginPath();
   ctx.moveTo(X(xmin),Y(b0+b1*xmin)); ctx.lineTo(X(xmax),Y(b0+b1*xmax)); ctx.stroke();
   ctx.fillStyle='#3b2d5a'; ctx.font='11px sans-serif';
@@ -314,7 +296,6 @@ async function loadCSVPoints(file, xCol, yCol, maxN=300){
   }catch(e){return [];}
 }
 
-// ---------- SIMPLE MODULE ----------
 function setupSimple(ds, varSelId, rangeId, numId, eqId, r2Id, predId, detId, chartId, csvFile, yCol){
   const sel=document.getElementById(varSelId);
   const range=document.getElementById(rangeId), num=document.getElementById(numId);
@@ -340,7 +321,6 @@ setupSimple('dolar','dolar-simple-var','dolar-simple-range','dolar-simple-num','
 setupSimple('energia','energia-simple-var','energia-simple-range','energia-simple-num','energia-simple-eq','energia-simple-r2','energia-simple-pred','energia-simple-detail','chart-energia-simple','energia_data.csv','Consumo_Energia');
 setupSimple('glucosa','glucosa-simple-var','glucosa-simple-range','glucosa-simple-num','glucosa-simple-eq','glucosa-simple-r2','glucosa-simple-pred','glucosa-simple-detail','chart-glucosa-simple','glucosa_data.csv','Nivel_Glucosa');
 
-// ---------- MULTIPLES ----------
 function dolarMulti(){
   const infl=parseFloat(document.getElementById('dolar-infl-n').value);
   const tasa=parseFloat(document.getElementById('dolar-tasa-n').value);
@@ -356,7 +336,6 @@ function dolarMulti(){
 ['dolar-infl-r','dolar-infl-n','dolar-tasa-r','dolar-tasa-n','dolar-dia-r','dolar-dia-n'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
   const base=id.replace('-r','').replace('-n','');
   const r=document.getElementById(base+'-r'), n=document.getElementById(base+'-n');
-  // sync
   const src=document.getElementById(id);
   if(id.endsWith('-r')) n.value=src.value; else r.value=src.value;
   dolarMulti();
