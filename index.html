@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictLab · Regresión Lineal y Múltiple</title>
+<style>
+:root{
+  --morado-50:#faf5ff; --morado-100:#f3e8ff; --morado-200:#e9d5ff; --morado-300:#d8b4fe; --morado-400:#c084fc; --morado-500:#a855f7; --morado-700:#7e22ce;
+  --azul-100:#e0f2fe; --azul-200:#bae6fd; --azul-300:#7dd3fc; --azul-500:#0ea5e9; --azul-700:#0369a1;
+  --ink:#3b2d5a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color:var(--ink);
+  background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 25%, #e9d5ff 45%, #bae6fd 100%);
+  min-height:100vh;
+}
+header{
+  background: linear-gradient(90deg, #a78bfa 0%, #c084fc 35%, #7dd3fc 100%);
+  color:white; padding:28px 20px; text-align:center; box-shadow:0 4px 20px rgba(168,85,247,.3);
+}
+header h1{margin:0; font-size:2rem; letter-spacing:.5px}
+header p{margin:8px 0 0; opacity:.95}
+.badge{display:inline-block; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.6); padding:4px 12px; border-radius:999px; font-size:.85rem; margin:4px}
+nav.tabs{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; padding:18px 12px 0}
+.tab-btn{
+  border:2px solid transparent; cursor:pointer; padding:12px 22px; border-radius:999px; font-weight:700; font-size:1rem;
+  background:white; color:var(--morado-700); box-shadow:0 2px 10px rgba(0,0,0,.08); transition:.2s;
+}
+.tab-btn.active{background:linear-gradient(90deg,var(--morado-500),var(--azul-500)); color:white; transform:translateY(-1px); box-shadow:0 6px 18px rgba(139,92,246,.4)}
+main{max-width:1100px; margin:0 auto; padding:18px 14px 60px}
+.card{background:rgba(255,255,255,.92); border:1px solid #e9d5ff; border-radius:18px; padding:20px; box-shadow:0 8px 30px rgba(125,211,252,.25); margin:14px 0}
+.card h2{margin-top:0; color:var(--morado-700)}
+.card h3{color:var(--azul-700); margin-bottom:6px}
+.grid{display:grid; gap:14px}
+@media(min-width:900px){ .grid2{grid-template-columns:1fr 1fr} .grid3{grid-template-columns:1fr 1fr 1fr} }
+label{font-weight:600; font-size:.92rem}
+input[type=number], select{width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--morado-200); background:#fff; font-size:1rem; color:var(--ink)}
+input[type=range]{width:100%; accent-color:var(--morado-500)}
+input:focus, select:focus{outline:none; border-color:var(--azul-500)}
+.equation{background:linear-gradient(90deg,#f3e8ff,#e0f2fe); border:1px dashed #a855f7; padding:10px 12px; border-radius:12px; font-family:Consolas,monospace; margin:10px 0; word-break:break-word}
+.result{background:linear-gradient(90deg,#a855f7,#0ea5e9); color:white; border-radius:16px; padding:18px; text-align:center; margin-top:12px}
+.result .big{font-size:2.2rem; font-weight:800; margin:4px 0}
+.r2{display:inline-block; background:#f3e8ff; color:#6b21a8; border-radius:999px; padding:4px 12px; font-weight:700; font-size:.9rem; margin:2px}
+.btn{background:linear-gradient(90deg,#a855f7,#38bdf8); color:white; border:none; padding:12px 20px; border-radius:999px; font-weight:800; cursor:pointer; font-size:1rem; box-shadow:0 4px 14px rgba(168,85,247,.4)}
+.btn:active{transform:scale(.98)}
+canvas.chart{width:100%; height:260px; background:white; border-radius:14px; border:1px solid #e0f2fe}
+small.muted{color:#7c6aa0}
+.mode-switch{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
+.mode-btn{padding:8px 16px; border-radius:999px; border:2px solid var(--morado-300); background:white; cursor:pointer; font-weight:700; color:var(--morado-700)}
+.mode-btn.active{background:var(--morado-500); color:white; border-color:var(--morado-500)}
+table.stats{width:100%; border-collapse:collapse; font-size:.9rem}
+table.stats th, table.stats td{padding:8px; border-bottom:1px solid #ede9fe; text-align:left}
+footer{text-align:center; padding:20px; color:#6d5b99}
+.kpi{display:flex; gap:10px; flex-wrap:wrap}
+.kpi div{flex:1 1 140px; background:linear-gradient(180deg,#fff,#f5f3ff); border:1px solid #ddd6fe; border-radius:14px; padding:10px; text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="badge">Regresión Lineal Simple + Múltiple</div>
+  <h1>🔮 PredictLab — Dólar · Energía · Glucosa</h1>
+  <p>Cambia las variables independientes y obtén la predicción al instante · Paleta morado claro + azul claro</p>
+  <div>
+    <span class="badge">Dataset 1: Precio Dólar</span>
+    <span class="badge">Dataset 2: Consumo Energía</span>
+    <span class="badge">Dataset 3: Nivel Glucosa</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="dolar">💵 Dólar</button>
+  <button class="tab-btn" data-tab="energia">⚡ Energía</button>
+  <button class="tab-btn" data-tab="glucosa">🩸 Glucosa</button>
+</nav>
+
+<main>
+<section id="tab-dolar" class="tab-panel">
+  <div class="card">
+    <h2>💵 Predicción del Precio del Dólar</h2>
+    <p><b>Target:</b> <code>Precio_Dolar</code> · <b>Variables:</b> <code>Inflacion</code>, <code>Tasa_interes</code>, <code>Dia</code> · n=500</p>
+    <div class="kpi">
+      <div><small class="muted">R² múltiple (3 vars)</small><br><b>0.9952</b></div>
+      <div><small class="muted">R² solo economía</small><br><b>0.0061</b></div>
+      <div><small class="muted">Media dólar</small><br><b>5211.77</b></div>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="simple-dolar">Regresión Lineal Simple</button>
+      <button class="mode-btn" data-mode="multiple-dolar">Regresión Múltiple</button>
+    </div>
+
+    <div id="simple-dolar">
+      <h3>Regresión lineal simple: y = b₀ + b₁·x</h3>
+      <div class="grid grid2">
+        <div>
+          <label>Variable independiente (X)</label>
+          <select id="dolar-simple-var">
+            <option value="Dia">Dia (tendencia temporal)</option>
+            <option value="Inflacion">Inflacion</option>
+            <option value="Tasa_interes">Tasa_interes</option>
+          </select>
+          <div class="equation" id="dolar-simple-eq"></div>
+          <span class="r2" id="dolar-simple-r2"></span>
+          <br><br>
+          <label id="dolar-simple-label">Valor X</label>
+          <input type="range" id="dolar-simple-range" step="any">
+          <input type="number" id="dolar-simple-num" step="any">
+          <div class="result"><div>Predicción Precio Dólar</div><div class="big" id="dolar-simple-pred">—</div><small id="dolar-simple-detail"></small></div>
+        </div>
+        <div>
+          <label>Gráfico dispersión + recta (muestra 120 pts del CSV)</label>
+          <canvas class="chart" id="chart-dolar-simple" width="500" height="260"></canvas>
+          <small class="muted">El gráfico se genera con tus CSV reales si están en la misma carpeta. Si no, usa la recta teórica.</small>
+        </div>
+      </div>
+    </div>
+
+    <div id="multiple-dolar" style="display:none">
+      <h3>Regresión múltiple: y = b₀ + b₁·Infl + b₂·Tasa + b₃·Dia</h3>
+      <div class="equation">Precio = 3978.985 − 338.060·Inflacion − 2.533·Tasa_interes + 4.999·Dia &nbsp; (R²=0.9952)<br>
+      Versión solo económica: 4570.858 + 3742.047·Inflacion + 112.830·Tasa (R²=0.0061 — casi no explica)</div>
+      <div class="grid grid3">
+        <div><label>Inflacion (0.003 – 0.04)</label><input type="range" id="dolar-infl-r" min="0.003" max="0.04" step="0.0005" value="0.02"><input type="number" id="dolar-infl-n" min="0.003" max="0.04" step="0.0005" value="0.02"></div>
+        <div><label>Tasa_interes % (3.6 – 6.3)</label><input type="range" id="dolar-tasa-r" min="3.6" max="6.3" step="0.01" value="5.0"><input type="number" id="dolar-tasa-n" min="3.6" max="6.3" step="0.01" value="5.0"></div>
+        <div><label>Dia (1 – 500)</label><input type="range" id="dolar-dia-r" min="1" max="500" step="1" value="250"><input type="number" id="dolar-dia-n" min="1" max="500" step="1" value="250"></div>
+      </div>
+      <label style="margin-top:8px;display:block"><input type="checkbox" id="dolar-sin-dia"> Predecir solo con economía (ignorar Dia)</label>
+      <div class="result"><div>Predicción Precio Dólar (múltiple)</div><div class="big" id="dolar-multi-pred">—</div><small id="dolar-multi-detail"></small></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-energia" class="tab-panel" style="display:none">
+  <div class="card">
+    <h2>⚡ Predicción Consumo de Energía</h2>
+    <p><b>Target:</b> <code>Consumo_Energia</code> · <b>Variables:</b> <code>Temperatura</code>, <code>Hora</code>, <code>Dia_Semana</code> · n=10000</p>
+    <div class="kpi">
+      <div><small class="muted">R² múltiple</small><br><b>0.9005</b></div>
+      <div><small class="muted">R² Temperatura</small><br><b>0.5959</b></div>
+      <div><small class="muted">Media consumo</small><br><b>400.04</b></div>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="simple-energia">Regresión Lineal Simple</button>
+      <button class="mode-btn" data-mode="multiple-energia">Regresión Múltiple</button>
+    </div>
+    <div id="simple-energia">
+      <h3>Regresión lineal simple</h3>
+      <div class="grid grid2">
+        <div>
+          <label>Variable independiente</label>
+          <select id="energia-simple-var">
+            <option value="Temperatura">Temperatura</option>
+            <option value="Hora">Hora (1-24)</option>
+            <option value="Dia_Semana">Dia_Semana (1-7)</option>
+          </select>
+          <div class="equation" id="energia-simple-eq"></div>
+          <span class="r2" id="energia-simple-r2"></span><br><br>
+          <label>Valor X</label>
+          <input type="range" id="energia-simple-range" step="any">
+          <input type="number" id="energia-simple-num" step="any">
+          <div class="result"><div>Predicción Consumo</div><div class="big" id="energia-simple-pred">—</div><small id="energia-simple-detail"></small></div>
+        </div>
+        <div><label>Gráfico</label><canvas class="chart" id="chart-energia-simple" width="500" height="260"></canvas></div>
+      </div>
+    </div>
+    <div id="multiple-energia" style="display:none">
+      <h3>Regresión múltiple</h3>
+      <div class="equation">Consumo = 101.383 + 9.966·Temp + 5.012·Hora − 3.089·Dia_Semana (R²=0.9005)</div>
+      <div class="grid grid3">
+        <div><label>Temperatura (5 – 44 °C)</label><input type="range" id="en-temp-r" min="5" max="44" step="0.1" value="25"><input type="number" id="en-temp-n" min="5" max="44" step="0.1" value="25"></div>
+        <div><label>Hora (1 – 24)</label><input type="range" id="en-hora-r" min="1" max="24" step="1" value="12"><input type="number" id="en-hora-n" min="1" max="24" step="1" value="12"></div>
+        <div><label>Dia_Semana (1 – 7)</label><input type="range" id="en-dia-r" min="1" max="7" step="1" value="4"><input type="number" id="en-dia-n" min="1" max="7" step="1" value="4"></div>
+      </div>
+      <div class="result"><div>Predicción Consumo (múltiple)</div><div class="big" id="energia-multi-pred">—</div><small id="energia-multi-detail"></small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GLUCOSA ============ -->
+<section id="tab-glucosa" class="tab-panel" style="display:none">
+  <div class="card">
+    <h2>🩸 Predicción Nivel de Glucosa</h2>
+    <p><b>Target:</b> <code>Nivel_Glucosa</code> · <b>Variables:</b> <code>Edad</code>, <code>IMC</code>, <code>Actividad_Fisica</code> · n=2000</p>
+    <div class="kpi">
+      <div><small class="muted">R² múltiple</small><br><b>0.6855</b></div>
+      <div><small class="muted">R² Edad</small><br><b>0.6238</b></div>
+      <div><small class="muted">Media glucosa</small><br><b>139.63</b></div>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="simple-glucosa">Regresión Lineal Simple</button>
+      <button class="mode-btn" data-mode="multiple-glucosa">Regresión Múltiple</button>
+    </div>
+    <div id="simple-glucosa">
+      <h3>Regresión lineal simple</h3>
+      <div class="grid grid2">
+        <div>
+          <label>Variable independiente</label>
+          <select id="glucosa-simple-var">
+            <option value="Edad">Edad</option>
+            <option value="IMC">IMC</option>
+            <option value="Actividad_Fisica">Actividad_Fisica (0-9)</option>
+          </select>
+          <div class="equation" id="glucosa-simple-eq"></div>
+          <span class="r2" id="glucosa-simple-r2"></span><br><br>
+          <label>Valor X</label>
+          <input type="range" id="glucosa-simple-range" step="any">
+          <input type="number" id="glucosa-simple-num" step="any">
+          <div class="result"><div>Predicción Glucosa</div><div class="big" id="glucosa-simple-pred">—</div><small id="glucosa-simple-detail"></small></div>
+        </div>
+        <div><label>Gráfico</label><canvas class="chart" id="chart-glucosa-simple" width="500" height="260"></canvas></div>
+      </div>
+    </div>
+    <div id="multiple-glucosa" style="display:none">
+      <h3>Regresión múltiple</h3>
+      <div class="equation">Glucosa = 66.315 + 1.234·Edad + 0.883·IMC − 2.010·Actividad (R²=0.6855)</div>
+      <div class="grid grid3">
+        <div><label>Edad (20 – 79)</label><input type="range" id="gl-edad-r" min="20" max="79" step="1" value="45"><input type="number" id="gl-edad-n" min="20" max="79" step="1" value="45"></div>
+        <div><label>IMC (10 – 40)</label><input type="range" id="gl-imc-r" min="10" max="40" step="0.1" value="25"><input type="number" id="gl-imc-n" min="10" max="40" step="0.1" value="25"></div>
+        <div><label>Actividad (0 – 9)</label><input type="range" id="gl-act-r" min="0" max="9" step="1" value="5"><input type="number" id="gl-act-n" min="0" max="9" step="1" value="5"></div>
+      </div>
+      <div class="result"><div>Predicción Glucosa (múltiple)</div><div class="big" id="glucosa-multi-pred">—</div><small id="glucosa-multi-detail"></small></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>Hecho con 💜 morado claro + 🩵 azul claro · Abre <code>index.html</code> con doble clic · Funciona sin internet</footer>
+
+<script>
+// ---------- MODELOS PRE-ENTRENADOS ----------
+const MODELS = {
+  dolar: {
+    simple: {
+      Inflacion:{b0:5153.851343,b1:2891.087216,r2:0.0004,min:0.003,max:0.04,def:0.02,step:0.0005},
+      Tasa_interes:{b0:4660.077354,b1:109.988864,r2:0.0055,min:3.6,max:6.3,def:5.0,step:0.01},
+      Dia:{b0:3959.733363,b1:4.998158,r2:0.9952,min:1,max:500,def:250,step:1}
+    },
+    multi:{b0:3978.984617,coef:[-338.059761,-2.532823,4.99906],r2:0.9952},
+    multiEco:{b0:4570.857961,coef:[3742.046614,112.829926],r2:0.0062}
+  },
+  energia:{
+    simple:{
+      Temperatura:{b0:154.643862,b1:9.845605,r2:0.5959,min:5,max:44,def:25,step:0.1},
+      Hora:{b0:339.101403,b1:4.877867,r2:0.2798,min:1,max:24,def:12,step:1},
+      Dia_Semana:{b0:413.0855,b1:-3.260983,r2:0.0104,min:1,max:7,def:4,step:1}
+    },
+    multi:{b0:101.38299,coef:[9.965998,5.01176,-3.08917],r2:0.9005}
+  },
+  glucosa:{
+    simple:{
+      Edad:{b0:79.123522,b1:1.230885,r2:0.6238,min:20,max:79,def:45,step:1},
+      IMC:{b0:115.92997,b1:0.949399,r2:0.0191,min:10,max:40,def:25,step:0.1},
+      Actividad_Fisica:{b0:148.318771,b1:-1.862717,r2:0.0394,min:0,max:9,def:5,step:1}
+    },
+    multi:{b0:66.314991,coef:[1.233681,0.883236,-2.010386],r2:0.6855}
+  }
+};
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  document.getElementById('tab-'+b.dataset.tab).style.display='block';
+}));
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>{
+  const parts=b.dataset.mode.split('-'); const mode=parts[0]; const ds=parts.slice(1).join('-');
+  const parent=b.parentElement;
+  parent.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  document.getElementById(mode+'-'+ds).style.display='block';
+  const other = mode==='simple' ? 'multiple-'+ds : 'simple-'+ds;
+  document.getElementById(other).style.display='none';
+}));
+
+// ---------- HELPERS ----------
+function bindPair(rId,nId,cb){
+  const r=document.getElementById(rId), n=document.getElementById(nId);
+  r.addEventListener('input',()=>{n.value=r.value; cb(parseFloat(r.value));});
+  n.addEventListener('input',()=>{r.value=n.value; cb(parseFloat(n.value));});
+}
+function drawChart(canvasId, pts, b0, b1, color1, color2){
+  const c=document.getElementById(canvasId); if(!c) return; const ctx=c.getContext('2d');
+  const W=c.width,H=c.height; ctx.clearRect(0,0,W,H);
+  let xs = pts.length? pts.map(p=>p[0]) : [0,1];
+  let ys = pts.length? pts.map(p=>p[1]) : [b0, b0+b1];
+  let xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys, b0+b1*xmin, b0+b1*xmax), ymax=Math.max(...ys, b0+b1*xmin, b0+b1*xmax);
+  if(xmax===xmin){xmax=xmin+1} if(ymax===ymin){ymax=ymin+1}
+  const pad=30;
+  const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad);
+  const Y=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-2*pad);
+  // grid
+  ctx.strokeStyle='#ede9fe'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const gx=pad+i*(W-2*pad)/4; ctx.beginPath();ctx.moveTo(gx,10);ctx.lineTo(gx,H-pad);ctx.stroke();}
+  // puntos
+  ctx.fillStyle=color1||'#c084fc';
+  pts.slice(0,400).forEach(p=>{ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),2.2,0,7);ctx.fill();});
+  // recta
+  ctx.strokeStyle=color2||'#0ea5e9'; ctx.lineWidth=3; ctx.beginPath();
+  ctx.moveTo(X(xmin),Y(b0+b1*xmin)); ctx.lineTo(X(xmax),Y(b0+b1*xmax)); ctx.stroke();
+  ctx.fillStyle='#3b2d5a'; ctx.font='11px sans-serif';
+  ctx.fillText(ymax.toFixed(0),4,Y(ymax)+3); ctx.fillText(ymin.toFixed(0),4,Y(ymin)+3);
+  ctx.fillText(xmin.toFixed(2),X(xmin)-10,H-8); ctx.fillText(xmax.toFixed(2),X(xmax)-20,H-8);
+}
+async function loadCSVPoints(file, xCol, yCol, maxN=300){
+  try{
+    const res=await fetch(file); if(!res.ok) return [];
+    const txt=await res.text(); const lines=txt.trim().split(/\n/);
+    const head=lines[0].split(','); const xi=head.indexOf(xCol), yi=head.indexOf(yCol);
+    if(xi<0||yi<0) return [];
+    const pts=[]; const step=Math.max(1,Math.floor(lines.length/maxN));
+    for(let i=1;i<lines.length;i+=step){const c=lines[i].split(','); pts.push([parseFloat(c[xi]),parseFloat(c[yi])]);}
+    return pts;
+  }catch(e){return [];}
+}
+
+// ---------- SIMPLE MODULE ----------
+function setupSimple(ds, varSelId, rangeId, numId, eqId, r2Id, predId, detId, chartId, csvFile, yCol){
+  const sel=document.getElementById(varSelId);
+  const range=document.getElementById(rangeId), num=document.getElementById(numId);
+  async function refresh(){
+    const v=sel.value; const m=MODELS[ds].simple[v];
+    range.min=m.min; range.max=m.max; range.step=m.step;
+    num.min=m.min; num.max=m.max; num.step=m.step;
+    if(!range.value||parseFloat(range.value)<m.min||parseFloat(range.value)>m.max){range.value=m.def; num.value=m.def;}
+    document.getElementById(eqId).textContent = `y = ${m.b0.toFixed(3)} + ${m.b1.toFixed(3)} · ${v}`;
+    document.getElementById(r2Id).textContent = `R² = ${m.r2.toFixed(4)}`;
+    const x=parseFloat(range.value);
+    const pred=m.b0+m.b1*x;
+    document.getElementById(predId).textContent = pred.toLocaleString('es',{maximumFractionDigits:2});
+    document.getElementById(detId).textContent = `${v}=${x} → ${m.b0.toFixed(2)} + ${m.b1.toFixed(2)}×${x}`;
+    const pts=await loadCSVPoints(csvFile,v,yCol,300);
+    drawChart(chartId,pts,m.b0,m.b1,'#c084fc','#0284c7');
+  }
+  sel.addEventListener('change',async()=>{const m=MODELS[ds].simple[sel.value]; range.value=m.def; num.value=m.def; await refresh();});
+  range.addEventListener('input',refresh); num.addEventListener('input',()=>{range.value=num.value; refresh();});
+  refresh();
+}
+setupSimple('dolar','dolar-simple-var','dolar-simple-range','dolar-simple-num','dolar-simple-eq','dolar-simple-r2','dolar-simple-pred','dolar-simple-detail','chart-dolar-simple','dolar_data.csv','Precio_Dolar');
+setupSimple('energia','energia-simple-var','energia-simple-range','energia-simple-num','energia-simple-eq','energia-simple-r2','energia-simple-pred','energia-simple-detail','chart-energia-simple','energia_data.csv','Consumo_Energia');
+setupSimple('glucosa','glucosa-simple-var','glucosa-simple-range','glucosa-simple-num','glucosa-simple-eq','glucosa-simple-r2','glucosa-simple-pred','glucosa-simple-detail','chart-glucosa-simple','glucosa_data.csv','Nivel_Glucosa');
+
+// ---------- MULTIPLES ----------
+function dolarMulti(){
+  const infl=parseFloat(document.getElementById('dolar-infl-n').value);
+  const tasa=parseFloat(document.getElementById('dolar-tasa-n').value);
+  const dia=parseFloat(document.getElementById('dolar-dia-n').value);
+  const soloEco=document.getElementById('dolar-sin-dia').checked;
+  let pred;
+  if(soloEco){pred=MODELS.dolar.multiEco.b0+MODELS.dolar.multiEco.coef[0]*infl+MODELS.dolar.multiEco.coef[1]*tasa;
+    document.getElementById('dolar-multi-detail').textContent=`Solo economía R²=0.0061 · Infl=${infl} Tasa=${tasa}`;
+  } else {const m=MODELS.dolar.multi; pred=m.b0+m.coef[0]*infl+m.coef[1]*tasa+m.coef[2]*dia;
+    document.getElementById('dolar-multi-detail').textContent=`R²=0.9952 · Infl=${infl} Tasa=${tasa} Dia=${dia}`;}
+  document.getElementById('dolar-multi-pred').textContent=pred.toLocaleString('es',{maximumFractionDigits:2});
+}
+['dolar-infl-r','dolar-infl-n','dolar-tasa-r','dolar-tasa-n','dolar-dia-r','dolar-dia-n'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  const base=id.replace('-r','').replace('-n','');
+  const r=document.getElementById(base+'-r'), n=document.getElementById(base+'-n');
+  // sync
+  const src=document.getElementById(id);
+  if(id.endsWith('-r')) n.value=src.value; else r.value=src.value;
+  dolarMulti();
+}));
+document.getElementById('dolar-sin-dia').addEventListener('change',dolarMulti);
+bindPair('en-temp-r','en-temp-n',()=>energiaMulti()); bindPair('en-hora-r','en-hora-n',()=>energiaMulti()); bindPair('en-dia-r','en-dia-n',()=>energiaMulti());
+function energiaMulti(){
+  const t=parseFloat(document.getElementById('en-temp-n').value), h=parseFloat(document.getElementById('en-hora-n').value), d=parseFloat(document.getElementById('en-dia-n').value);
+  const m=MODELS.energia.multi; const p=m.b0+m.coef[0]*t+m.coef[1]*h+m.coef[2]*d;
+  document.getElementById('energia-multi-pred').textContent=p.toLocaleString('es',{maximumFractionDigits:2});
+  document.getElementById('energia-multi-detail').textContent=`R²=0.9005 · T=${t}° H=${h} D=${d}`;
+}
+bindPair('gl-edad-r','gl-edad-n',()=>glucosaMulti()); bindPair('gl-imc-r','gl-imc-n',()=>glucosaMulti()); bindPair('gl-act-r','gl-act-n',()=>glucosaMulti());
+function glucosaMulti(){
+  const e=parseFloat(document.getElementById('gl-edad-n').value), imc=parseFloat(document.getElementById('gl-imc-n').value), a=parseFloat(document.getElementById('gl-act-n').value);
+  const m=MODELS.glucosa.multi; const p=m.b0+m.coef[0]*e+m.coef[1]*imc+m.coef[2]*a;
+  document.getElementById('glucosa-multi-pred').textContent=p.toLocaleString('es',{maximumFractionDigits:2});
+  document.getElementById('glucosa-multi-detail').textContent=`R²=0.6855 · Edad=${e} IMC=${imc} Act=${a}`;
+}
+dolarMulti(); energiaMulti(); glucosaMulti();
+</script>
+</body>
+</html>
